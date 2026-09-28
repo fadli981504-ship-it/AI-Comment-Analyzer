@@ -1,0 +1,1062 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Comment Analyzer</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a, #1d4ed8);
+            padding: 40px 20px;
+            color: #111827;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 55px;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            margin: 10px 0;
+        }
+
+        .header p {
+            color: #dbeafe;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,.35);
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 170px;
+            padding: 18px;
+            border: 2px solid #d1d5db;
+            border-radius: 12px;
+            resize: vertical;
+            font-size: 16px;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: #2563eb;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            border: none;
+            padding: 13px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .analyze {
+            background: #2563eb;
+            color: white;
+            flex: 1;
+        }
+
+        .analyze:hover {
+            background: #1d4ed8;
+        }
+
+        .reset {
+            background: #e5e7eb;
+        }
+
+        .examples {
+            margin-top: 20px;
+        }
+
+        .examples button {
+            background: #dbeafe;
+            color: #1e40af;
+            margin: 5px 5px 0 0;
+        }
+
+        #result {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 20px;
+            border-radius: 14px;
+            font-size: 21px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .status-bad {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-negative {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-positive {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-neutral {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .stat {
+            padding: 20px;
+            text-align: center;
+            border-radius: 14px;
+        }
+
+        .stat h3 {
+            margin-bottom: 10px;
+        }
+
+        .number {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .bad {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .negative {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .positive {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .box {
+            margin-top: 15px;
+            padding: 20px;
+            background: #f3f4f6;
+            border-radius: 14px;
+        }
+
+        .box h3 {
+            margin-bottom: 12px;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            padding: 7px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .tag-bad {
+            background: #ef4444;
+            color: white;
+        }
+
+        .tag-negative {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .tag-positive {
+            background: #22c55e;
+            color: white;
+        }
+
+        .filtered {
+            background: #111827;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            line-height: 1.6;
+        }
+
+        .score-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+
+        .progress {
+            height: 18px;
+            background: #e5e7eb;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        #progressBar {
+            height: 100%;
+            width: 0%;
+            transition: .5s;
+            background: #22c55e;
+        }
+
+        .footer {
+            text-align: center;
+            color: #cbd5e1;
+            margin-top: 25px;
+            font-size: 13px;
+        }
+
+        @media(max-width:700px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <div class="logo">🤖</div>
+
+        <h1>AI Comment Analyzer</h1>
+
+        <p>
+            Pendeteksi Kata Kasar, Negatif, dan Positif
+        </p>
+    </div>
+
+
+    <div class="card">
+
+        <label for="comment">
+            💬 Masukkan Komentar
+        </label>
+
+        <textarea
+            id="comment"
+            placeholder="Contoh: Pelayanannya sangat bagus dan membantu...">
+        </textarea>
+
+
+        <div class="buttons">
+
+            <button
+                class="analyze"
+                onclick="analyzeComment()">
+                🤖 Analisis Komentar
+            </button>
+
+            <button
+                class="reset"
+                onclick="resetApp()">
+                🔄 Reset
+            </button>
+
+        </div>
+
+
+        <div class="examples">
+
+            <strong>Contoh:</strong>
+
+            <br>
+
+            <button onclick="exampleBad()">
+                🔴 Kasar
+            </button>
+
+            <button onclick="exampleNegative()">
+                🟠 Negatif
+            </button>
+
+            <button onclick="examplePositive()">
+                🟢 Positif
+            </button>
+
+            <button onclick="exampleSunda()">
+                🟣 Sunda
+            </button>
+
+        </div>
+
+
+        <div id="result">
+
+            <div id="status" class="status"></div>
+
+
+            <div class="stats">
+
+                <div class="stat bad">
+                    <h3>🔴 Kata Kasar</h3>
+                    <div id="badCount" class="number">0</div>
+                </div>
+
+                <div class="stat negative">
+                    <h3>🟠 Kata Negatif</h3>
+                    <div id="negativeCount" class="number">0</div>
+                </div>
+
+                <div class="stat positive">
+                    <h3>🟢 Kata Positif</h3>
+                    <div id="positiveCount" class="number">0</div>
+                </div>
+
+            </div>
+
+
+            <div class="box">
+
+                <h3>🔎 Kata Terdeteksi</h3>
+
+                <div
+                    id="detectedWords"
+                    class="tags">
+                </div>
+
+            </div>
+
+
+            <div class="box">
+
+                <h3>🛡️ Hasil Penyaringan</h3>
+
+                <div
+                    id="filteredText"
+                    class="filtered">
+                </div>
+
+            </div>
+
+
+            <div class="box">
+
+                <div class="score-header">
+                    <span>📊 Tingkat Negatif</span>
+                    <span id="score">0%</span>
+                </div>
+
+                <div class="progress">
+                    <div id="progressBar"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+        AI Comment Analyzer • HTML + CSS + JavaScript
+    </div>
+
+</div>
+
+
+<script>
+
+/* =================================================
+   🔴 KATA KASAR INDONESIA + SUNDA
+================================================= */
+
+const badWords = [
+
+    "kontol",
+    "memek",
+    "ngentot",
+    "brengsek",
+    "bangsat",
+    "bajingan",
+    "kampret",
+    "keparat",
+    "tai",
+    "goblok",
+    "tolol",
+    "bodoh",
+    "bego",
+    "idiot",
+    "anjing",
+    "monyet",
+    "sialan",
+    "babi",
+    "itil",
+    "dongo"
+    
+    // Bahasa Sunda / makian
+    "belegug",
+    "bedegong",
+    "goblog",
+    "gelo",
+    "kehed",
+    "sia mah",
+    "siah",
+    "dasar belegug",
+    "dasar bedegong"
+    "dasar bedegon"
+];
+
+
+/* =================================================
+   🟠 KATA NEGATIF INDONESIA + SUNDA
+================================================= */
+
+const negativeWords = [
+
+    "gak berguna",
+    "ga berguna",
+    "nggak berguna",
+    "tidak berguna",
+
+    "tidak becus",
+    "tidak bagus",
+    "tidak baik",
+
+    "sangat buruk",
+    "buruk",
+    "buruk sekali",
+    "buruk banget",
+
+    "sangat mengecewakan",
+    "mengecewakan",
+    "mengecewakan sekali",
+
+    "menyebalkan",
+    "menjengkelkan",
+    "menjijikkan",
+
+    "benci",
+
+    "payah",
+    "payah banget",
+
+    "jelek",
+    "jelek banget",
+
+    "gagal",
+    "gagal total",
+
+    "sampah",
+
+    "kesal",
+    "sangat kesal",
+
+    "kecewa",
+    "sangat kecewa",
+
+    "marah",
+    "sangat marah",
+
+    "parah",
+    "sangat parah",
+
+    "tidak puas",
+    "tidak memuaskan",
+    "sangat tidak memuaskan",
+
+    "tidak layak",
+    "tidak pantas",
+
+    "tidak profesional",
+    "tidak kompeten",
+
+    "tidak membantu",
+    "tidak ada gunanya",
+
+    "percuma",
+
+    "menyusahkan",
+    "merepotkan",
+    "merugikan",
+    "meresahkan",
+
+    "mengganggu",
+    "mengacaukan",
+
+    "bikin kecewa",
+    "bikin kesal",
+    "bikin marah",
+    "bikin jengkel",
+
+    "hasilnya buruk",
+    "hasilnya jelek",
+
+    "pelayanan buruk",
+    "pelayanan jelek",
+    "pelayanan mengecewakan",
+
+    "kualitas buruk",
+    "kualitas jelek",
+
+    "produk mengecewakan",
+
+    "tidak sesuai",
+    "tidak sesuai harapan",
+
+    "tidak bisa diandalkan",
+    "sulit dipercaya",
+
+    "tidak memuaskan sama sekali",
+
+    "benar-benar buruk",
+    "benar-benar jelek",
+
+    // Bahasa Sunda negatif
+    "teu alus",
+    "teu hade",
+    "teu hadé",
+    "teu pantes",
+    "teu bener",
+    "teu puguh",
+    "teu guna",
+    "goreng",
+    "goréng",
+    "nguciwakeun",
+    "matak kesel",
+    "matak ambek",
+    "matak nyebelin",
+    "ngaganggu",
+    "teu nyugemakeun"
+
+];
+
+
+/* =================================================
+   🟢 KATA POSITIF INDONESIA + SUNDA
+================================================= */
+
+const positiveWords = [
+
+    "baik",
+    "sangat baik",
+    "baik sekali",
+
+    "bagus",
+    "sangat bagus",
+    "bagus sekali",
+
+    "mantap",
+    "sangat mantap",
+
+    "keren",
+    "sangat keren",
+
+    "luar biasa",
+
+    "hebat",
+    "sangat hebat",
+
+    "sempurna",
+    "sangat sempurna",
+
+    "puas",
+    "sangat puas",
+
+    "memuaskan",
+    "sangat memuaskan",
+
+    "membantu",
+    "sangat membantu",
+
+    "bermanfaat",
+    "sangat bermanfaat",
+
+    "berguna",
+    "sangat berguna",
+
+    "berkualitas",
+    "sangat berkualitas",
+
+    "profesional",
+    "sangat profesional",
+
+    "kompeten",
+
+    "terpercaya",
+    "dapat dipercaya",
+    "dapat diandalkan",
+
+    "mengagumkan",
+
+    "menyenangkan",
+    "sangat menyenangkan",
+
+    "menarik",
+    "sangat menarik",
+
+    "mudah digunakan",
+    "sangat mudah digunakan",
+
+    "sesuai",
+    "sesuai harapan",
+
+    "berhasil",
+
+    "sukses",
+    "sangat sukses",
+
+    "rekomendasi",
+    "direkomendasikan",
+    "sangat direkomendasikan",
+
+    "terbaik",
+
+    "pelayanan baik",
+    "pelayanan bagus",
+    "pelayanan memuaskan",
+
+    "kualitas bagus",
+    "kualitas baik",
+
+    "produk bagus",
+    "produk berkualitas",
+
+    "hasilnya bagus",
+    "hasilnya baik",
+
+    "kerja bagus",
+    "kerja baik",
+
+    "terima kasih",
+
+    "selamat",
+    "senang",
+    "bahagia",
+    "bangga",
+
+    "suka",
+    "sangat suka",
+
+    // Bahasa Sunda positif
+    "alus",
+    "hadé",
+    "hade",
+    "saé",
+    "sae",
+    "alus pisan",
+    "hadé pisan",
+    "hade pisan",
+    "saé pisan",
+    "sae pisan",
+    "bageur",
+    "sopan",
+    "ramah",
+    "mangpaat",
+    "ngabantu",
+    "pikaresepeun",
+    "matak resep",
+    "resep pisan"
+
+];
+
+
+/* =================================================
+   FUNGSI ESCAPE REGEX
+================================================= */
+
+function escapeRegex(text) {
+
+    return text.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+    );
+
+}
+
+
+/* =================================================
+   DETEKSI KATA
+================================================= */
+
+function findWords(text, list) {
+
+    let found = [];
+
+    list.forEach(word => {
+
+        const regex = new RegExp(
+            "(^|\\s)" +
+            escapeRegex(word) +
+            "(?=\\s|$|[.,!?])",
+            "gi"
+        );
+
+        if (regex.test(text)) {
+            found.push(word);
+        }
+
+    });
+
+    return found;
+
+}
+
+
+/* =================================================
+   ANALISIS
+================================================= */
+
+function analyzeComment() {
+
+    const original =
+        document.getElementById("comment").value.trim();
+
+    if (original === "") {
+
+        alert("Masukkan komentar terlebih dahulu!");
+
+        return;
+
+    }
+
+
+    const text = original.toLowerCase();
+
+
+    const bad =
+        findWords(text, badWords);
+
+    const negative =
+        findWords(text, negativeWords);
+
+    const positive =
+        findWords(text, positiveWords);
+
+
+    /* JUMLAH */
+
+    document.getElementById("badCount")
+        .textContent = bad.length;
+
+    document.getElementById("negativeCount")
+        .textContent = negative.length;
+
+    document.getElementById("positiveCount")
+        .textContent = positive.length;
+
+
+    /* STATUS */
+
+    const status =
+        document.getElementById("status");
+
+    status.className = "status";
+
+
+    if (bad.length > 0) {
+
+        status.classList.add("status-bad");
+
+        status.innerHTML =
+            "🔴 KOMENTAR MENGANDUNG KATA KASAR";
+
+    }
+
+    else if (negative.length > 0) {
+
+        status.classList.add("status-negative");
+
+        status.innerHTML =
+            "🟠 KOMENTAR NEGATIF TERDETEKSI";
+
+    }
+
+    else if (positive.length > 0) {
+
+        status.classList.add("status-positive");
+
+        status.innerHTML =
+            "🟢 KOMENTAR POSITIF";
+
+    }
+
+    else {
+
+        status.classList.add("status-neutral");
+
+        status.innerHTML =
+            "🔵 KOMENTAR NETRAL";
+
+    }
+
+
+    /* KATA TERDETEKSI */
+
+    const detected =
+        document.getElementById("detectedWords");
+
+    detected.innerHTML = "";
+
+
+    bad.forEach(word => {
+
+        detected.innerHTML +=
+            `<span class="tag tag-bad">
+                🔴 ${word}
+            </span>`;
+
+    });
+
+
+    negative.forEach(word => {
+
+        detected.innerHTML +=
+            `<span class="tag tag-negative">
+                🟠 ${word}
+            </span>`;
+
+    });
+
+
+    positive.forEach(word => {
+
+        detected.innerHTML +=
+            `<span class="tag tag-positive">
+                🟢 ${word}
+            </span>`;
+
+    });
+
+
+    if (
+        bad.length === 0 &&
+        negative.length === 0 &&
+        positive.length === 0
+    ) {
+
+        detected.innerHTML =
+            "Tidak ada kata yang terdeteksi.";
+
+    }
+
+
+    /* FILTER KATA KASAR */
+
+    let filtered = original;
+
+
+    badWords.forEach(word => {
+
+        const regex = new RegExp(
+            escapeRegex(word),
+            "gi"
+        );
+
+        filtered =
+            filtered.replace(regex, "***");
+
+    });
+
+
+    /* HASIL PENYARINGAN */
+
+    document.getElementById("filteredText")
+        .textContent = filtered;
+
+
+    /* SKOR */
+
+    const totalNegative =
+        bad.length + negative.length;
+
+    const score =
+        Math.min(totalNegative * 15, 100);
+
+
+    document.getElementById("score")
+        .textContent = score + "%";
+
+
+    const progress =
+        document.getElementById("progressBar");
+
+    progress.style.width =
+        score + "%";
+
+
+    if (score >= 70) {
+
+        progress.style.background =
+            "#ef4444";
+
+    }
+
+    else if (score >= 30) {
+
+        progress.style.background =
+            "#f59e0b";
+
+    }
+
+    else {
+
+        progress.style.background =
+            "#22c55e";
+
+    }
+
+
+    document.getElementById("result")
+        .style.display = "block";
+
+}
+
+
+/* =================================================
+   CONTOH KATA KASAR
+================================================= */
+
+function exampleBad() {
+
+    document.getElementById("comment").value =
+        "Kamu goblok dan kontol, kerjaan kamu gak berguna.";
+
+    analyzeComment();
+
+}
+
+
+/* =================================================
+   CONTOH NEGATIF
+================================================= */
+
+function exampleNegative() {
+
+    document.getElementById("comment").value =
+        "Hasilnya sangat buruk dan sangat mengecewakan, saya merasa kecewa.";
+
+    analyzeComment();
+
+}
+
+
+/* =================================================
+   CONTOH POSITIF
+================================================= */
+
+function examplePositive() {
+
+    document.getElementById("comment").value =
+        "Hasilnya sangat bagus, baik, keren, dan sangat membantu.";
+
+    analyzeComment();
+
+}
+
+
+/* =================================================
+   CONTOH SUNDA
+================================================= */
+
+function exampleSunda() {
+
+    document.getElementById("comment").value =
+        "Dasar belegug, hasilna teu alus jeung teu hade.";
+
+    analyzeComment();
+
+}
+
+
+/* =================================================
+   RESET
+================================================= */
+
+function resetApp() {
+
+    document.getElementById("comment")
+        .value = "";
+
+    document.getElementById("result")
+        .style.display = "none";
+
+    document.getElementById("badCount")
+        .textContent = "0";
+
+    document.getElementById("negativeCount")
+        .textContent = "0";
+
+    document.getElementById("positiveCount")
+        .textContent = "0";
+
+    document.getElementById("score")
+        .textContent = "0%";
+
+    document.getElementById("progressBar")
+        .style.width = "0%";
+
+    document.getElementById("detectedWords")
+        .innerHTML = "";
+
+    document.getElementById("filteredText")
+        .textContent = "";
+
+}
+
+</script>
+
+</body>
+</html>
+```
